@@ -1,0 +1,6 @@
+Id,Title,Author,Year,Pages,Genre,Finished,Rating
+1,"Clean Code","Robert C. Martin",2008,464,software,yes,5
+2,"The Hobbit","J.R.R. Tolkien",1937,310,fantasy,no,4.5
+3,Refactoring,"Martin Fowler",1999,448,software,yes,4.7
+3,Duplicate Id,"Someone",2020,123,misc,no,0
+,Missing Id,"Anon",2020,100,other,yes,3
