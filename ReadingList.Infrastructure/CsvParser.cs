@@ -83,7 +83,12 @@ namespace ReadingList.Infrastructure
             if (!string.IsNullOrEmpty(ratingStr))
             {
                 if (!double.TryParse(ratingStr, NumberStyles.Float, CultureInfo.InvariantCulture, out rating))
-                    return Result<Book>.Fail("Invalid Rating (must be a number like 4.5).");
+                {
+                    if (!double.TryParse(ratingStr, System.Globalization.NumberStyles.Float, CultureInfo.CurrentCulture, out rating))
+                    {
+                        return Result<Book>.Fail("Invalid Rating (use 4.5 or 4,5).");
+                    }
+                }
                 if (rating < 0.0 || rating > 5.0)
                     return Result<Book>.Fail("Rating must be between 0.0 and 5.0.");
             }

@@ -42,6 +42,7 @@ namespace ReadingList.Domain
             this.NumberOfPages = pages;
             this.Genre = genre;
             this.IsFinished = finished;
+            this.Rating = rating;
         }
 
         public void MarkAsFinished() => this.IsFinished = true;
