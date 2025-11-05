@@ -103,6 +103,13 @@ namespace ReadingList.App
                     continue;
                 }
 
+                if(cmd.Equals("stats", StringComparison.OrdinalIgnoreCase))
+                {
+                    var books = repository.GetAll();
+                    PrintStats(books);
+                    continue;
+                }
+
                 Console.WriteLine($"Unknown command: \"{cmd}\"");
                 Console.WriteLine("Type 'help' to see available commands.");
                 await Task.Yield();
@@ -136,6 +143,7 @@ namespace ReadingList.App
             Console.WriteLine("  filter finished       - show only finished books");
             Console.WriteLine("  top rated <n>         - show top N books by rating");
             Console.WriteLine("  by author <text>      - show books by author (case-insensitive)");
+            Console.WriteLine("  stats                 - show statistics");
         }
 
         private static async Task HandleImportAsync(string path)
@@ -164,5 +172,65 @@ namespace ReadingList.App
                 Console.WriteLine($"[error] Import failed: {ex.Message}");
             }
         }
+
+        private static void PrintStats(IEnumerable<Book> books)
+        {
+            Console.WriteLine("=== Reading List Statistics ===");
+
+            var bookList = books.ToList();
+
+            Console.WriteLine($"\nTotal books: {bookList.Count}");
+
+            int finished = bookList.Count(b => b.IsFinished);
+
+            Console.WriteLine($"\nFinished books: {finished}");
+
+            var avgRating = bookList.Any() 
+                ? bookList.Average(b => b.Rating) 
+                : 0.0;
+
+            Console.WriteLine($"\nAverage rating: {avgRating:0.00}");
+
+            var pagesByGenre = bookList
+                .GroupBy(b => b.Genre)
+                .Select(g => new { Genre = g.Key, NumberOfPages = g.Sum(b => b.NumberOfPages) })
+                .ToList();
+
+            Console.WriteLine("\nTotal pages by genre:");
+            if(pagesByGenre.Count == 0)
+            {
+                Console.WriteLine("  (no data)");
+            }
+            else
+            {
+                foreach (var pg in pagesByGenre)
+                {
+                    Console.WriteLine($"- {pg.Genre}: {pg.NumberOfPages}");
+                }
+                
+            }
+
+            var topAuthors = bookList
+                .GroupBy(b => b.Author)
+                .Select(g => new { Author = g.Key, BookCount = g.Count()})
+                .OrderByDescending(a => a.BookCount)
+                .Take(3)
+                .ToList();
+
+            Console.WriteLine("\nTop 3 authors by number of books:");
+            if(topAuthors.Count == 0)
+            {
+                Console.WriteLine("  (no data)");
+            }
+            else
+            {
+                foreach (var author in topAuthors)
+                {
+                    Console.WriteLine($"- {author.Author}: {author.BookCount}");
+                }
+            }
+
+        }
+
     }
 }

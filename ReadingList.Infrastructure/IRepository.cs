@@ -9,6 +9,7 @@ namespace ReadingList.Infrastructure
     public interface IRepository<T, TKey>
     {
         int Count { get; }
+
         IEnumerable<TKey> GetKeys {  get; }
 
         bool Add(T item);

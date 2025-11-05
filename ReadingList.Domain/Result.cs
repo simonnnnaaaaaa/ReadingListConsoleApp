@@ -10,7 +10,7 @@ namespace ReadingList.Domain
 {
     public sealed class Result<T> //vezi sealed class
     {
-        public bool IsSuccess { get; }
+       public bool IsSuccess { get; }
        public T? Value { get; }
 
        public string? ErrorMessage { get; }

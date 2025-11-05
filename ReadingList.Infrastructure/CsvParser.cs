@@ -30,7 +30,7 @@ namespace ReadingList.Infrastructure
                 : Result<bool>.Fail($"Invalid CSV header. Expected: '{ExpectedHeader}', but got: '{given}'.");
         }
 
-        public static Result<Book> ParseLine(string line) //into book
+        public static Result<Book> ParseLine(string line) //into Result<Book>
         {
             if (string.IsNullOrWhiteSpace(line))
             {
