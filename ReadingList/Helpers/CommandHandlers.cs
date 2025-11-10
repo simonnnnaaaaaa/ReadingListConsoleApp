@@ -8,6 +8,7 @@ namespace ReadingList.App.Helpers
 {
     public static class CommandHandlers
     {
+        
         public static async Task HandleImportAsync(
             string path,
             IRepository<Book, int> repository,
@@ -39,5 +40,59 @@ namespace ReadingList.App.Helpers
                 Console.WriteLine($"[error] Import failed: {ex.Message}");
             }
         }
+
+
+        public static Task HandleMarkFinishedAsync(int id, IRepository<Book, int> repository)
+        {
+            if(!repository.TryGet(id, out var book) || book is null)
+            {
+                Console.WriteLine($"[error] Book with Id {id} not found.");
+                return Task.CompletedTask;
+            }
+
+            if(!book.IsFinished)
+            {
+                book.MarkAsFinished();
+                repository.Upsert(book);
+                Console.WriteLine($"Book '{book.Title}' marked as finished.");
+            }
+            else
+            {
+                Console.WriteLine($"Book '{book.Title}' is already marked as finished.");
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public static Task HandleRateAsync(int id, double rating, IRepository<Book, int> repository)
+        {
+            if (rating < 0.0 || rating > 5.0)
+            {
+                Console.WriteLine("[error] Rating must be between 0.0 and 5.0.");
+                return Task.CompletedTask;
+            }
+
+            if (!repository.TryGet(id, out var book) || book is null)
+            {
+                Console.WriteLine($"[error] Book with Id {id} not found.");
+                return Task.CompletedTask;
+            }
+
+            try
+            {
+                book.SetRating(rating);
+                repository.Upsert(book);
+                Console.WriteLine($"Book '{book.Title}' rated {book.Rating}.");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($"[error] {ex.Message}");
+            }
+
+            return Task.CompletedTask;
+
+
+        }
+
     }
 }

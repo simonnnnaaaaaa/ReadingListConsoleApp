@@ -20,6 +20,8 @@ namespace ReadingList.App.Helpers
             Console.WriteLine("  top rated <n>         - show top N books by rating");
             Console.WriteLine("  by author <text>      - show books by author (case-insensitive)");
             Console.WriteLine("  stats                 - show statistics");
+            Console.WriteLine("  mark finished <id>    - mark a book as finished");
+            Console.WriteLine("  rate <id> <0-5>       - update a book rating");
         }
 
         public static void PrintBooks(IEnumerable<Book> books)

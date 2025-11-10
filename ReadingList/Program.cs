@@ -111,6 +111,43 @@ namespace ReadingList.App
                     continue;
                 }
 
+                if (cmd.StartsWith("mark finished ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (parts.Length == 3 && int.TryParse(parts[2], out int id) && id > 0)
+                    {
+                        await CommandHandlers.HandleMarkFinishedAsync(id, repository);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Usage: mark finished <book-id>");
+                    }
+                    continue;
+                }
+
+                if (cmd.StartsWith("rate ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (parts.Length == 3 
+                        && int.TryParse(parts[1], out int id)
+                        && id > 0
+                        && double.TryParse(parts[2], 
+                                           System.Globalization.NumberStyles.Float, 
+                                           System.Globalization.CultureInfo.InvariantCulture, 
+                                           out double rating)
+                        )
+                    {
+                        await CommandHandlers.HandleRateAsync(id, rating, repository);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Usage: rate <id> <0-5>");
+                    }
+                    continue;
+                }
+
                 Console.WriteLine($"Unknown command: \"{cmd}\"");
                 Console.WriteLine("Type 'help' to see available commands.");
                 await Task.Yield();
