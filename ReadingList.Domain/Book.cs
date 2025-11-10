@@ -52,9 +52,8 @@ namespace ReadingList.Domain
             if(value < 0.0 || value > 5.0)
             {
                 throw new ArgumentOutOfRangeException(nameof(value), "Rating must be between 0.0 and 5.0");
-
-                this.Rating = Math.Round(value, 1);
             }
+            this.Rating = Math.Round(value, 1);
         }
 
         public override string ToString()

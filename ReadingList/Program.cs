@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ReadingList.Domain;
 using ReadingList.Infrastructure;
+using ReadingList.App.Helpers;
 
 namespace ReadingList.App
 {
@@ -40,28 +41,28 @@ namespace ReadingList.App
 
                 if (cmd.Equals("help", StringComparison.OrdinalIgnoreCase) || cmd == "?")
                 {
-                    ShowHelp();
+                    ConsolePrinter.ShowHelp();
                     continue;
                 }
 
                 if (cmd.StartsWith("import ", StringComparison.OrdinalIgnoreCase))
                 {
                     var path = cmd.Substring("import ".Length).Trim();
-                    await HandleImportAsync(path);
+                    await CommandHandlers.HandleImportAsync(path, repository, _importService, Console.Out);
                     continue;
                 }
 
                 if(cmd.Equals("list all", StringComparison.OrdinalIgnoreCase))
                 {
                     var books = repository.GetAll();
-                    PrintBooks(books);
+                    ConsolePrinter.PrintBooks(books);
                     continue;
                 }
 
                 if(cmd.Equals("filter finished", StringComparison.OrdinalIgnoreCase))
                 {
                     var books = repository.GetAll().Where(b => b.IsFinished);
-                    PrintBooks(books);
+                    ConsolePrinter.PrintBooks(books);
                     continue;
                 }
 
@@ -74,7 +75,7 @@ namespace ReadingList.App
                             .OrderByDescending(b => b.Rating)
                             .Take(n);
 
-                        PrintBooks(books);
+                        ConsolePrinter.PrintBooks(books);
                     }
                     else
                     {
@@ -97,7 +98,7 @@ namespace ReadingList.App
                         var books = repository.GetAll()
                             .Where(b => b.Author.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 
-                        PrintBooks(books);
+                        ConsolePrinter.PrintBooks(books);
                     }
 
                     continue;
@@ -106,7 +107,44 @@ namespace ReadingList.App
                 if(cmd.Equals("stats", StringComparison.OrdinalIgnoreCase))
                 {
                     var books = repository.GetAll();
-                    PrintStats(books);
+                    ConsolePrinter.PrintStats(books);
+                    continue;
+                }
+
+                if (cmd.StartsWith("mark finished ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (parts.Length == 3 && int.TryParse(parts[2], out int id) && id > 0)
+                    {
+                        await CommandHandlers.HandleMarkFinishedAsync(id, repository);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Usage: mark finished <book-id>");
+                    }
+                    continue;
+                }
+
+                if (cmd.StartsWith("rate ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (parts.Length == 3 
+                        && int.TryParse(parts[1], out int id)
+                        && id > 0
+                        && double.TryParse(parts[2], 
+                                           System.Globalization.NumberStyles.Float, 
+                                           System.Globalization.CultureInfo.InvariantCulture, 
+                                           out double rating)
+                        )
+                    {
+                        await CommandHandlers.HandleRateAsync(id, rating, repository);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Usage: rate <id> <0-5>");
+                    }
                     continue;
                 }
 
@@ -116,121 +154,7 @@ namespace ReadingList.App
             }
         }
 
-        private static void PrintBooks(IEnumerable<Book> books)
-        {
-            var bookList = books.ToList();
-
-            if(bookList.Count == 0)
-            {
-                Console.WriteLine("No books found.");
-                return;
-            }
-
-            foreach(var book in bookList)
-            {
-                Console.WriteLine(book.ToString());
-            }
-
-        }
-
-        private static void ShowHelp()
-        {
-            Console.WriteLine("Available commands:");
-            Console.WriteLine("  help                  - show this help");
-            Console.WriteLine("  exit                  - quit the app");
-            Console.WriteLine("  import <path>         - import books from CSV");
-            Console.WriteLine("  list all              - show all imported books");
-            Console.WriteLine("  filter finished       - show only finished books");
-            Console.WriteLine("  top rated <n>         - show top N books by rating");
-            Console.WriteLine("  by author <text>      - show books by author (case-insensitive)");
-            Console.WriteLine("  stats                 - show statistics");
-        }
-
-        private static async Task HandleImportAsync(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                Console.WriteLine("Usage: import <path-to-csv>");
-                return;
-            }
-
-            try
-            {
-                var summary = await _importService.ImportFileAsync(path, repository, Console.Out);
-                Console.WriteLine();
-                Console.WriteLine("=== Import summary ===");
-                Console.WriteLine($"Imported : {summary.Imported}");
-                Console.WriteLine($"Duplicates: {summary.Duplicates}");
-                Console.WriteLine($"Malformed : {summary.Malformed}");
-                if (summary.SkippedIds.Count > 0)
-                    Console.WriteLine("Skipped Ids: " + string.Join(", ", summary.SkippedIds));
-                Console.WriteLine("======================");
-                Console.WriteLine();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[error] Import failed: {ex.Message}");
-            }
-        }
-
-        private static void PrintStats(IEnumerable<Book> books)
-        {
-            Console.WriteLine("=== Reading List Statistics ===");
-
-            var bookList = books.ToList();
-
-            Console.WriteLine($"\nTotal books: {bookList.Count}");
-
-            int finished = bookList.Count(b => b.IsFinished);
-
-            Console.WriteLine($"\nFinished books: {finished}");
-
-            var avgRating = bookList.Any() 
-                ? bookList.Average(b => b.Rating) 
-                : 0.0;
-
-            Console.WriteLine($"\nAverage rating: {avgRating:0.00}");
-
-            var pagesByGenre = bookList
-                .GroupBy(b => b.Genre)
-                .Select(g => new { Genre = g.Key, NumberOfPages = g.Sum(b => b.NumberOfPages) })
-                .ToList();
-
-            Console.WriteLine("\nTotal pages by genre:");
-            if(pagesByGenre.Count == 0)
-            {
-                Console.WriteLine("  (no data)");
-            }
-            else
-            {
-                foreach (var pg in pagesByGenre)
-                {
-                    Console.WriteLine($"- {pg.Genre}: {pg.NumberOfPages}");
-                }
-                
-            }
-
-            var topAuthors = bookList
-                .GroupBy(b => b.Author)
-                .Select(g => new { Author = g.Key, BookCount = g.Count()})
-                .OrderByDescending(a => a.BookCount)
-                .Take(3)
-                .ToList();
-
-            Console.WriteLine("\nTop 3 authors by number of books:");
-            if(topAuthors.Count == 0)
-            {
-                Console.WriteLine("  (no data)");
-            }
-            else
-            {
-                foreach (var author in topAuthors)
-                {
-                    Console.WriteLine($"- {author.Author}: {author.BookCount}");
-                }
-            }
-
-        }
+        
 
     }
 }
