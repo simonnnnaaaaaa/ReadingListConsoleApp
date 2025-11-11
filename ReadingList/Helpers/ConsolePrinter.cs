@@ -22,6 +22,9 @@ namespace ReadingList.App.Helpers
             Console.WriteLine("  stats                 - show statistics");
             Console.WriteLine("  mark finished <id>    - mark a book as finished");
             Console.WriteLine("  rate <id> <0-5>       - update a book rating");
+            Console.WriteLine("  export json <path>    - save current books to JSON");
+            Console.WriteLine("  export csv <path>     - save current books to CSV");
+
         }
 
         public static void PrintBooks(IEnumerable<Book> books)

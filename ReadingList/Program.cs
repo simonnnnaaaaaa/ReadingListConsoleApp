@@ -13,6 +13,7 @@ namespace ReadingList.App
             new InMemoryRepository<Book, int>(b => b.Id);
 
         private static readonly ImportService _importService = new ImportService();
+        private static readonly ExportService _exportService = new ExportService();
 
         public static async Task Main(string[] args)
         {
@@ -145,6 +146,20 @@ namespace ReadingList.App
                     {
                         Console.WriteLine("Usage: rate <id> <0-5>");
                     }
+                    continue;
+                }
+
+                if(cmd.StartsWith("export json ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var path = cmd.Substring("export json ".Length).Trim();
+                    await CommandHandlers.HandleExportJsonAsync(path, repository, _exportService);
+                    continue;
+                }
+
+                if(cmd.StartsWith("export csv ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var path = cmd.Substring("export csv ".Length).Trim();
+                    await CommandHandlers.HandleExportCsvAsync(path, repository, _exportService);
                     continue;
                 }
 
