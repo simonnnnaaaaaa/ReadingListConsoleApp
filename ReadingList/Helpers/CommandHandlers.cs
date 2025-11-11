@@ -94,5 +94,69 @@ namespace ReadingList.App.Helpers
 
         }
 
+
+        public static async Task HandleExportJsonAsync(string path, IRepository<Book, int> repository, ExportService exportService)
+        {
+            if(string.IsNullOrWhiteSpace(path))
+            {
+                Console.WriteLine("Usage: export json <path>");
+                return;
+            }
+
+            if(File.Exists(path))
+            {
+                Console.Write("File exists. Overwrite? (y/n): ");
+                var answer = (Console.ReadLine() ?? string.Empty).Trim().ToLowerInvariant();
+                if (answer is not ("y" or "yes"))
+                {
+                    Console.WriteLine("Export canceled.");
+                    return;
+                }
+            }
+
+            try
+            {
+                await exportService.ExportJsonAsync(repository.GetAll(), path);
+                Console.WriteLine($"Exported books to JSON file at '{path}'.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[error] Export JSON failed: {ex.Message}");
+            }
+
+        }
+
+        public static async Task HandleExportCsvAsync(string path, IRepository<Book, int> repository, ExportService exportService)
+        {
+
+            if(string.IsNullOrWhiteSpace(path))
+            {
+                Console.WriteLine("Usage: export csv <path>");
+                return;
+            }
+
+            if (File.Exists(path))
+            {
+                Console.Write("File exists. Overwrite? (y/n): ");
+                var answer = (Console.ReadLine() ?? string.Empty).Trim().ToLowerInvariant();
+                if (answer is not ("y" or "yes"))
+                {
+                    Console.WriteLine("Export canceled.");
+                    return;
+                }
+            }
+
+            try
+            {
+                await exportService.ExportCsvAsync(repository.GetAll(), path);
+                Console.WriteLine($"Exported CSV to: {path}");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[error] Export CSV failed: {ex.Message}");
+            }
+
+        }
+
     }
 }
