@@ -12,12 +12,26 @@ namespace ReadingList.Infrastructure
         public int Duplicates { get; set; }
         public int Malformed { get; set; }
 
-        //IDs that were skipped because they already existed
         public List<int> SkippedIds { get; } = new();
 
         public override string ToString()
            => $"Imported={Imported}, Duplicates={Duplicates}, Malformed={Malformed}";
 
-
+        public void Merge(ImportSummary other)
+        {
+            if (other is null)
+            {
+                throw new ArgumentNullException(nameof(other));
+            }
+            
+            Imported += other.Imported;
+            Duplicates += other.Duplicates;
+            Malformed += other.Malformed;
+            
+            if(other.SkippedIds.Count > 0)
+            {
+                SkippedIds.AddRange(other.SkippedIds);
+            }
+        }
     }
 }
