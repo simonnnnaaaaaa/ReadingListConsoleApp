@@ -3,6 +3,8 @@ using System.IO;
 using System.Threading.Tasks;
 using ReadingList.Domain;
 using ReadingList.Infrastructure;
+using System.Text;
+using System.Collections.Generic;
 
 namespace ReadingList.App.Helpers
 {
@@ -36,6 +38,35 @@ namespace ReadingList.App.Helpers
                 Console.WriteLine();
             }
             catch (Exception ex)
+            {
+                Console.WriteLine($"[error] Import failed: {ex.Message}");
+            }
+        }
+
+        public static async Task HandleImportManyAsync(string[] paths, IRepository<Book, int> repository, ImportService importService, TextWriter? log = null)
+        {
+            if(paths.Length == 0)
+            {
+                Console.WriteLine("Usage: import files");
+                return;
+            }
+
+            try
+            {
+                var summary = await importService.ImportFilesAsync(paths, repository, log ?? Console.Out);
+
+                Console.WriteLine("\n=== Total import summary ===");
+                Console.WriteLine($"Imported : {summary.Imported}");
+                Console.WriteLine($"Duplicates: {summary.Duplicates}");
+                Console.WriteLine($"Malformed : {summary.Malformed}");
+
+                if(summary.SkippedIds.Count > 0)
+                {
+                    Console.WriteLine("Skipped Ids: " + string.Join(", ", summary.SkippedIds));
+                }
+                Console.WriteLine("============================\n");
+            }
+            catch(Exception ex)
             {
                 Console.WriteLine($"[error] Import failed: {ex.Message}");
             }
@@ -155,6 +186,43 @@ namespace ReadingList.App.Helpers
             {
                 Console.WriteLine($"[error] Export CSV failed: {ex.Message}");
             }
+
+        }
+
+        public static string[] SplitArgs(string input)
+        {
+            var args = new List<string>();
+            var sb = new StringBuilder();
+            bool inQuotes = false;
+
+            foreach(var ch in input)
+            {
+                if (ch == '"') 
+                { 
+                    inQuotes = !inQuotes; 
+                    continue; 
+                }
+
+                if(!inQuotes && char.IsWhiteSpace(ch))
+                {
+                    if(sb.Length > 0)
+                    {
+                        args.Add(sb.ToString());
+                        sb.Clear();
+                    }
+                }
+                else
+                {
+                    sb.Append(ch);
+                }
+            }
+
+            if(sb.Length > 0)
+            {
+                args.Add(sb.ToString());
+            }
+
+            return args.ToArray();
 
         }
 

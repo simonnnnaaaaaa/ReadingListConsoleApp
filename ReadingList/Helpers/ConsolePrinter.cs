@@ -14,7 +14,7 @@ namespace ReadingList.App.Helpers
             Console.WriteLine("Available commands:");
             Console.WriteLine("  help                  - show this help");
             Console.WriteLine("  exit                  - quit the app");
-            Console.WriteLine("  import <path>         - import books from CSV");
+            Console.WriteLine("  import <f1.csv> [...] - import books from one or more CSV files (parallel)");
             Console.WriteLine("  list all              - show all imported books");
             Console.WriteLine("  filter finished       - show only finished books");
             Console.WriteLine("  top rated <n>         - show top N books by rating");

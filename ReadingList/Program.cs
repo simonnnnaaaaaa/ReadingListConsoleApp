@@ -48,8 +48,19 @@ namespace ReadingList.App
 
                 if (cmd.StartsWith("import ", StringComparison.OrdinalIgnoreCase))
                 {
-                    var path = cmd.Substring("import ".Length).Trim();
-                    await CommandHandlers.HandleImportAsync(path, repository, _importService, Console.Out);
+
+                    var arg = cmd.Substring("import ".Length).Trim();
+
+                    var parts = CommandHandlers.SplitArgs(arg);
+
+                    if(parts.Length == 1)
+                    {
+                        await CommandHandlers.HandleImportAsync(parts[0], repository,_importService, Console.Out);
+                    }
+                    else
+                    {
+                        await CommandHandlers.HandleImportManyAsync(parts, repository, _importService, Console.Out);
+                    }
                     continue;
                 }
 
