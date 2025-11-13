@@ -15,9 +15,22 @@ namespace ReadingList.App
         private static readonly ImportService _importService = new ImportService();
         private static readonly ExportService _exportService = new ExportService();
 
+        private static CancellationTokenSource _cts = new();
+
         public static async Task Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
+
+            Console.CancelKeyPress += (s, e) =>
+            {
+                e.Cancel = true;
+                if (!_cts.IsCancellationRequested)
+                {
+                    Console.WriteLine("\n[info] Cancellation requested... trying to stop gracefully.");
+                    _cts.Cancel();
+                }
+            };
+
             Console.WriteLine("Type 'help' for commands, 'exit' to quit.");
 
             await RunCommandLoopAsync();
@@ -27,11 +40,19 @@ namespace ReadingList.App
         {
             while (true)
             {
+                // IMPORTANT: dacă un command anterior a fost anulat, recream CTS pentru următoarea comanda
+                if (_cts.IsCancellationRequested)
+                {
+                    _cts.Dispose();
+                    _cts = new CancellationTokenSource();
+                }
+
                 Console.Write("> ");
                 var line = Console.ReadLine();
                 if (line is null) break;
 
                 var cmd = line.Trim();
+                var token = _cts.Token;
 
                 if (cmd.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
                     cmd.Equals("quit", StringComparison.OrdinalIgnoreCase))
@@ -55,11 +76,11 @@ namespace ReadingList.App
 
                     if(parts.Length == 1)
                     {
-                        await CommandHandlers.HandleImportAsync(parts[0], repository,_importService, Console.Out);
+                        await CommandHandlers.HandleImportAsync(parts[0], repository,_importService, Console.Out, token);
                     }
                     else
                     {
-                        await CommandHandlers.HandleImportManyAsync(parts, repository, _importService, Console.Out);
+                        await CommandHandlers.HandleImportManyAsync(parts, repository, _importService, Console.Out, token);
                     }
                     continue;
                 }
@@ -163,14 +184,14 @@ namespace ReadingList.App
                 if(cmd.StartsWith("export json ", StringComparison.OrdinalIgnoreCase))
                 {
                     var path = cmd.Substring("export json ".Length).Trim();
-                    await CommandHandlers.HandleExportJsonAsync(path, repository, _exportService);
+                    await CommandHandlers.HandleExportJsonAsync(path, repository, _exportService, token);
                     continue;
                 }
 
                 if(cmd.StartsWith("export csv ", StringComparison.OrdinalIgnoreCase))
                 {
                     var path = cmd.Substring("export csv ".Length).Trim();
-                    await CommandHandlers.HandleExportCsvAsync(path, repository, _exportService);
+                    await CommandHandlers.HandleExportCsvAsync(path, repository, _exportService, token);
                     continue;
                 }
 

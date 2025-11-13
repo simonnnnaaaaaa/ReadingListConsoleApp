@@ -5,13 +5,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ReadingList.Domain;
+using System.Threading;
 
 namespace ReadingList.Infrastructure
 {
     public sealed class ImportService
     {
+        private readonly int _delayMs;
 
-        public async Task<ImportSummary> ImportFileAsync(string path, IRepository<Book, int> repository, TextWriter? log = null)
+        public ImportService(int delayMs = 800)
+        {
+            if (delayMs < 0) throw new ArgumentOutOfRangeException(nameof(delayMs));
+            _delayMs = delayMs;
+        }
+
+        public async Task<ImportSummary> ImportFileAsync(string path, IRepository<Book, int> repository, TextWriter? log = null, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -25,7 +33,7 @@ namespace ReadingList.Infrastructure
 
             var summary = new ImportSummary();
 
-            string[] lines = await File.ReadAllLinesAsync(path).ConfigureAwait(false);
+            string[] lines = await File.ReadAllLinesAsync(path, ct).ConfigureAwait(false);
 
             if (lines.Length == 0)
             {
@@ -35,6 +43,14 @@ namespace ReadingList.Infrastructure
 
             for (int i = 1; i < lines.Length; i++)
             {
+                ct.ThrowIfCancellationRequested(); // periodic check
+
+                // DOAR ÎN DEBUG: simulăm I/O lent
+                if (_delayMs > 0)
+                { 
+                    await Task.Delay(_delayMs, ct);
+                }
+
                 var line = lines[i];
                 
                 if(string.IsNullOrWhiteSpace(line))
@@ -42,16 +58,16 @@ namespace ReadingList.Infrastructure
                     continue;
                 }
 
-                var parts = CsvParser.ParseLine(line);
+                var parsed = CsvParser.ParseLine(line);
 
-                if(!parts.IsSuccess)
+                if(!parsed.IsSuccess)
                 {
-                    log?.WriteLine($"[warn] Line {i + 1} is malformed: {parts.ErrorMessage}. Skipping.");
+                    log?.WriteLine($"[warn] Line {i + 1} is malformed: {parsed.ErrorMessage}. Skipping.");
                     summary.Malformed++;
                     continue;
                 }
 
-                var book = parts.Value!;
+                var book = parsed.Value!;
 
                 bool added = repository.Add(book);
 
@@ -71,7 +87,7 @@ namespace ReadingList.Infrastructure
         }
 
 
-        public async Task<ImportSummary> ImportFilesAsync(IEnumerable<string> paths, IRepository<Book, int> repository, TextWriter?log = null)
+        public async Task<ImportSummary> ImportFilesAsync(IEnumerable<string> paths, IRepository<Book, int> repository, TextWriter?log = null, CancellationToken ct = default)
         {
             var logger = log ?? TextWriter.Null;
 
@@ -94,8 +110,13 @@ namespace ReadingList.Infrastructure
                 try
                 {
                     await logger.WriteLineAsync($"[info] Starting import for file '{file}'...");
-                    var s = await ImportFileAsync(file, repository, logger);
+                    var s = await ImportFileAsync(file, repository, logger, ct);
                     summaries.Add(s);
+                }
+                catch (OperationCanceledException)
+                {
+                    await logger.WriteLineAsync($"[info] Canceled '{file}'.");
+                    throw; // propagate so the whole import is canceled
                 }
                 catch (Exception ex)
                 {

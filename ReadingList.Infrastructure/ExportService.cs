@@ -12,10 +12,22 @@ namespace ReadingList.Infrastructure
 {
     public sealed class ExportService
     {
+        private readonly int _delayMs;
+
+        public ExportService(int delayMs = 800)
+        {
+            if (delayMs < 0) throw new ArgumentOutOfRangeException(nameof(delayMs));
+            _delayMs = delayMs;
+        }
 
         public async Task ExportJsonAsync(IEnumerable<Book> books, string path, CancellationToken ct = default)
         {
             var list = books.ToList();
+
+            if (_delayMs > 0)
+            {
+                await Task.Delay(_delayMs, ct);
+            }
 
             var options = new JsonSerializerOptions
             {
@@ -34,6 +46,7 @@ namespace ReadingList.Infrastructure
             await using var sw = new StreamWriter(fs, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
             await sw.WriteLineAsync("Id,Title,Author,Year,Pages,Genre,Finished,Rating");
+            ct.ThrowIfCancellationRequested();
 
             static string Escape(string? s)
             {
@@ -48,6 +61,11 @@ namespace ReadingList.Infrastructure
 
             foreach (var book in books)
             {
+                ct.ThrowIfCancellationRequested();
+
+                if (_delayMs > 0)
+                    await Task.Delay(_delayMs, ct);  
+
                 var line = string.Join(",",
                     book.Id.ToString(CultureInfo.InvariantCulture),
                     Escape(book.Title),
@@ -62,6 +80,7 @@ namespace ReadingList.Infrastructure
             }
 
             await sw.FlushAsync();
+            await fs.FlushAsync(ct);
 
         }
     }
