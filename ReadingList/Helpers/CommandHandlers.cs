@@ -5,6 +5,7 @@ using ReadingList.Domain;
 using ReadingList.Infrastructure;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace ReadingList.App.Helpers
 {
@@ -15,7 +16,8 @@ namespace ReadingList.App.Helpers
             string path,
             IRepository<Book, int> repository,
             ImportService importService,
-            TextWriter? log = null)
+            TextWriter? log = null,
+            CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -25,7 +27,7 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                var summary = await importService.ImportFileAsync(path, repository, log ?? Console.Out);
+                var summary = await importService.ImportFileAsync(path, repository, log ?? Console.Out, ct);
 
                 Console.WriteLine();
                 Console.WriteLine("=== Import summary ===");
@@ -43,7 +45,7 @@ namespace ReadingList.App.Helpers
             }
         }
 
-        public static async Task HandleImportManyAsync(string[] paths, IRepository<Book, int> repository, ImportService importService, TextWriter? log = null)
+        public static async Task HandleImportManyAsync(string[] paths, IRepository<Book, int> repository, ImportService importService, TextWriter? log = null, CancellationToken ct = default)
         {
             if(paths.Length == 0)
             {
@@ -53,7 +55,7 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                var summary = await importService.ImportFilesAsync(paths, repository, log ?? Console.Out);
+                var summary = await importService.ImportFilesAsync(paths, repository, log ?? Console.Out, ct);
 
                 Console.WriteLine("\n=== Total import summary ===");
                 Console.WriteLine($"Imported : {summary.Imported}");
@@ -126,7 +128,7 @@ namespace ReadingList.App.Helpers
         }
 
 
-        public static async Task HandleExportJsonAsync(string path, IRepository<Book, int> repository, ExportService exportService)
+        public static async Task HandleExportJsonAsync(string path, IRepository<Book, int> repository, ExportService exportService, CancellationToken ct)
         {
             if(string.IsNullOrWhiteSpace(path))
             {
@@ -147,7 +149,7 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                await exportService.ExportJsonAsync(repository.GetAll(), path);
+                await exportService.ExportJsonAsync(repository.GetAll(), path, ct);
                 Console.WriteLine($"Exported books to JSON file at '{path}'.");
             }
             catch (Exception ex)
@@ -157,7 +159,7 @@ namespace ReadingList.App.Helpers
 
         }
 
-        public static async Task HandleExportCsvAsync(string path, IRepository<Book, int> repository, ExportService exportService)
+        public static async Task HandleExportCsvAsync(string path, IRepository<Book, int> repository, ExportService exportService, CancellationToken ct = default)
         {
 
             if(string.IsNullOrWhiteSpace(path))
@@ -179,7 +181,7 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                await exportService.ExportCsvAsync(repository.GetAll(), path);
+                await exportService.ExportCsvAsync(repository.GetAll(), path, ct);
                 Console.WriteLine($"Exported CSV to: {path}");
             }
             catch(Exception ex)
