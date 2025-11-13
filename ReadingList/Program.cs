@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using ReadingList.Domain;
 using ReadingList.Infrastructure;
 using ReadingList.App.Helpers;
+using ReadingList.Infrastructure.Exporting;
+
 
 namespace ReadingList.App
 {
@@ -13,7 +15,14 @@ namespace ReadingList.App
             new InMemoryRepository<Book, int>(b => b.Id);
 
         private static readonly ImportService _importService = new ImportService();
-        private static readonly ExportService _exportService = new ExportService();
+        
+        private static readonly ExportService _exportService =
+            new ExportService(new IExportStrategy[]
+            {
+                new JsonExportStrategy(delayMs: 800),
+                new CsvExportStrategy(delayMs: 800),
+            });
+
 
         private static CancellationTokenSource _cts = new();
 

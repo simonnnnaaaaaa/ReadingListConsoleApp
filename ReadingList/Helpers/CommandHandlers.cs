@@ -6,18 +6,15 @@ using ReadingList.Infrastructure;
 using System.Text;
 using System.Collections.Generic;
 using System.Threading;
+using ReadingList.Infrastructure.Exporting;
+
 
 namespace ReadingList.App.Helpers
 {
     public static class CommandHandlers
     {
         
-        public static async Task HandleImportAsync(
-            string path,
-            IRepository<Book, int> repository,
-            ImportService importService,
-            TextWriter? log = null,
-            CancellationToken ct = default)
+        public static async Task HandleImportAsync(string path, IRepository<Book, int> repository, ImportService importService, TextWriter? log = null, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -149,7 +146,7 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                await exportService.ExportJsonAsync(repository.GetAll(), path, ct);
+                await exportService.ExportAsync("json", repository.GetAll(), path, ct);
                 Console.WriteLine($"Exported books to JSON file at '{path}'.");
             }
             catch (Exception ex)
@@ -181,10 +178,14 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                await exportService.ExportCsvAsync(repository.GetAll(), path, ct);
+                await exportService.ExportAsync("csv", repository.GetAll(), path, ct);
                 Console.WriteLine($"Exported CSV to: {path}");
             }
-            catch(Exception ex)
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("[info] Export canceled.");
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine($"[error] Export CSV failed: {ex.Message}");
             }
