@@ -63,7 +63,7 @@ namespace ReadingList.App.Helpers
             Console.WriteLine($"\nAverage rating: {avgRating:0.00}");
 
             var pagesByGenre = bookList
-                .GroupBy(b => b.Genre)
+                .GroupBy(b => b.Genre ?? string.Empty, StringComparer.OrdinalIgnoreCase)
                 .Select(g => new { Genre = g.Key, NumberOfPages = g.Sum(b => b.NumberOfPages) })
                 .ToList();
 
@@ -82,7 +82,7 @@ namespace ReadingList.App.Helpers
             }
 
             var topAuthors = bookList
-                .GroupBy(b => b.Author)
+                .GroupBy(b => b.Author ?? string.Empty, StringComparer.OrdinalIgnoreCase)
                 .Select(g => new { Author = g.Key, BookCount = g.Count() })
                 .OrderByDescending(a => a.BookCount)
                 .Take(3)
