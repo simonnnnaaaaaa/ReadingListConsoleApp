@@ -41,11 +41,18 @@ namespace ReadingList.Infrastructure
                 return summary;
             }
 
+            var headerLine = lines[0].Trim().TrimStart('\uFEFF');
+            var headerCheck = CsvParser.ValidateHeader(headerLine);
+            if (!headerCheck.IsSuccess)
+            {
+                log?.WriteLine($"[warn] {headerCheck.ErrorMessage} File '{path}' skipped.");
+                return summary;
+            }
+
             for (int i = 1; i < lines.Length; i++)
             {
-                ct.ThrowIfCancellationRequested(); // periodic check
+                ct.ThrowIfCancellationRequested(); 
 
-                // DOAR ÎN DEBUG: simulăm I/O lent
                 if (_delayMs > 0)
                 { 
                     await Task.Delay(_delayMs, ct);
@@ -62,7 +69,7 @@ namespace ReadingList.Infrastructure
 
                 if(!parsed.IsSuccess)
                 {
-                    log?.WriteLine($"[warn] Line {i + 1} is malformed: {parsed.ErrorMessage}. Skipping.");
+                    log?.WriteLine($"[warn] {Path.GetFileName(path)}: line {i + 1} malformed: {parsed.ErrorMessage}. Skipping.");
                     summary.Malformed++;
                     continue;
                 }
@@ -116,7 +123,7 @@ namespace ReadingList.Infrastructure
                 catch (OperationCanceledException)
                 {
                     await logger.WriteLineAsync($"[info] Canceled '{file}'.");
-                    throw; // propagate so the whole import is canceled
+                    throw; 
                 }
                 catch (Exception ex)
                 {
