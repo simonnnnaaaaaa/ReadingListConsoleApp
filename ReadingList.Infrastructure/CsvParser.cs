@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ReadingList.Domain;
 
 namespace ReadingList.Infrastructure
 {
@@ -51,12 +52,17 @@ namespace ReadingList.Infrastructure
             }
 
             //title
-            var title = cells[1].Trim();
+            //var title = cells[1].Trim();
+            var title = cells[1].NormalizeSpaces().ToTitleCaseSafe();
+
             if (string.IsNullOrWhiteSpace(title))
                 return Result<Book>.Fail("Title is required.");
 
+
             //author
-            var author = cells[2].Trim();
+            //var author = cells[2].Trim();
+            var author = cells[2].NormalizeSpaces().ToTitleCaseSafe();
+
             if (string.IsNullOrWhiteSpace(author))
                 return Result<Book>.Fail("Author is required.");
 
@@ -69,13 +75,18 @@ namespace ReadingList.Infrastructure
                 return Result<Book>.Fail("Invalid Pages (must be an integer).");
 
             //genre
-            var genre = cells[5].Trim();
+            //var genre = cells[5].Trim();
+            var genre = cells[5].NormalizeSpaces().ToTitleCaseSafe();
+
             if (string.IsNullOrWhiteSpace(genre))
                 return Result<Book>.Fail("Genre is required.");
 
             //is finished
+            //var finishedStr = cells[6].Trim();
+            //var finished = ParseBoolLoose(finishedStr);
             var finishedStr = cells[6].Trim();
-            var finished = ParseBoolLoose(finishedStr);
+            bool finished = false;
+            finishedStr.TryParseYesNo(out finished);
 
             //rating
             double rating = 0.0;

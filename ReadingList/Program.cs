@@ -103,7 +103,8 @@ namespace ReadingList.App
 
                 if(cmd.Equals("filter finished", StringComparison.OrdinalIgnoreCase))
                 {
-                    var books = repository.GetAll().Where(b => b.IsFinished);
+                    //var books = repository.GetAll().Where(b => b.IsFinished);
+                    var books = repository.GetAll().FilterFinished();
                     ConsolePrinter.PrintBooks(books);
                     continue;
                 }
@@ -113,9 +114,11 @@ namespace ReadingList.App
                     var parts = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length == 3 && int.TryParse(parts[2], out int n) && n > 0)
                     {
-                        var books = repository.GetAll()
-                            .OrderByDescending(b => b.Rating)
-                            .Take(n);
+                        //var books = repository.GetAll()
+                        //    .OrderByDescending(b => b.Rating)
+                        //    .Take(n);
+
+                        var books = repository.GetAll().TopRated(n);
 
                         ConsolePrinter.PrintBooks(books);
                     }
@@ -137,8 +140,11 @@ namespace ReadingList.App
                     }
                     else
                     {
-                        var books = repository.GetAll()
-                            .Where(b => b.Author.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+                        //var books = repository.GetAll()
+                            //.Where(b => b.Author.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+
+                        var books = repository.GetAll().ByAuthorContains(keyword);
+
 
                         ConsolePrinter.PrintBooks(books);
                     }
