@@ -1,11 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using ReadingList.Domain;
+﻿using ReadingList.Domain;
 using ReadingList.Infrastructure;
 using System.Text;
-using System.Collections.Generic;
-using System.Threading;
 using ReadingList.Infrastructure.Exporting;
 
 
