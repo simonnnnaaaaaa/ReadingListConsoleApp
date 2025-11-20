@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using ReadingList.Domain;
+﻿using ReadingList.Domain;
 
 namespace ReadingList.Infrastructure.Exporting
 { 

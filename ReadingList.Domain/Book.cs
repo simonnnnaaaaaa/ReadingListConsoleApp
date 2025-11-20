@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+
 
 namespace ReadingList.Domain
 {
@@ -21,7 +17,7 @@ namespace ReadingList.Domain
         public int NumberOfPages { get; set; }
         public string Genre { get; set; }
         public bool IsFinished { get; set; }
-        [Range(0.0, 5.0, ErrorMessage = "Rating must be between 0.0 and 5.0.")]
+        [Range(0.0, 5.0, ErrorMessage = "Rating must be between 0.0 and 5.0.")]  
         public double Rating { get; set; }
 
 

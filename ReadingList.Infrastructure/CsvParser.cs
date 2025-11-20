@@ -1,11 +1,6 @@
 ﻿using ReadingList.Domain;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using ReadingList.Domain;
 
 namespace ReadingList.Infrastructure
 {
@@ -31,7 +26,7 @@ namespace ReadingList.Infrastructure
                 : Result<bool>.Fail($"Invalid CSV header. Expected: '{ExpectedHeader}', but got: '{given}'.");
         }
 
-        public static Result<Book> ParseLine(string line) //into Result<Book>
+        public static Result<Book> ParseLine(string line) 
         {
             if (string.IsNullOrWhiteSpace(line))
             {
@@ -45,50 +40,37 @@ namespace ReadingList.Infrastructure
                 return Result<Book>.Fail($"Invalid number of fields. Expected 8 but got {cells.Length}.");
             }
 
-            //id
             if (!int.TryParse(cells[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var id) || id <= 0)
             {
                 return Result<Book>.Fail($"Invalid Id value.");
             }
 
-            //title
-            //var title = cells[1].Trim();
             var title = cells[1].NormalizeSpaces().ToTitleCaseSafe();
 
             if (string.IsNullOrWhiteSpace(title))
                 return Result<Book>.Fail("Title is required.");
 
 
-            //author
-            //var author = cells[2].Trim();
             var author = cells[2].NormalizeSpaces().ToTitleCaseSafe();
 
             if (string.IsNullOrWhiteSpace(author))
                 return Result<Book>.Fail("Author is required.");
 
-            //year
             if (!int.TryParse(cells[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var year))
                 return Result<Book>.Fail("Invalid Year (must be an integer).");
 
-            //number of pages
             if (!int.TryParse(cells[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out var pages))
                 return Result<Book>.Fail("Invalid Pages (must be an integer).");
 
-            //genre
-            //var genre = cells[5].Trim();
             var genre = cells[5].NormalizeSpaces().ToTitleCaseSafe();
 
             if (string.IsNullOrWhiteSpace(genre))
                 return Result<Book>.Fail("Genre is required.");
 
-            //is finished
-            //var finishedStr = cells[6].Trim();
-            //var finished = ParseBoolLoose(finishedStr);
             var finishedStr = cells[6].Trim();
             bool finished = false;
             finishedStr.TryParseYesNo(out finished);
 
-            //rating
             double rating = 0.0;
             var ratingStr = cells[7].Trim();
             if (!string.IsNullOrEmpty(ratingStr))
@@ -124,13 +106,6 @@ namespace ReadingList.Infrastructure
                 return Result<Book>.Fail($"Error creating Book object: {ex.Message}");
             }
 
-        }
-
-        private static bool ParseBoolLoose(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return false;
-            var v = value.Trim().ToLowerInvariant();
-            return v is "y" or "yes" or "true" or "1";
         }
 
         private static string[] SplitCsvLine(string line)

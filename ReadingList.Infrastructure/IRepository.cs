@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace ReadingList.Infrastructure
 {
-    public interface IRepository<T, TKey>
+    public interface IRepository<T, TKey> where TKey : notnull
     {
         int Count { get; }
 
@@ -14,7 +9,7 @@ namespace ReadingList.Infrastructure
 
         bool Add(T item);
 
-        bool Upsert(T item); //insert if missing, overwrite if present. Always returns true
+        bool Upsert(T item); 
 
         bool Remove(TKey key);
 
