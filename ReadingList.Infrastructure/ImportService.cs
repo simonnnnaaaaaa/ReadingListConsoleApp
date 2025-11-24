@@ -26,7 +26,7 @@ namespace ReadingList.Infrastructure
 
             var summary = new ImportSummary();
 
-            string[] lines = await File.ReadAllLinesAsync(path, ct).ConfigureAwait(false);
+            string[] lines = await File.ReadAllLinesAsync(path, ct);
 
             if (lines.Length == 0)
             {
