@@ -11,7 +11,7 @@ namespace ReadingList.Domain
         public string Title { get; set; }
         [Required]
         public string Author { get; set; }
-        [Range(1500, 2050)] //de facut custom attribute aici
+        [YearPublished]
         public int YearPublished { get; set; }
         [Range(1, 5000)]
         public int NumberOfPages { get; set; }
@@ -39,6 +39,14 @@ namespace ReadingList.Domain
             this.Genre = genre;
             this.IsFinished = finished;
             this.Rating = rating;
+
+            Validate();
+        }
+
+        public void Validate()
+        {
+            var ctx = new ValidationContext(this);
+            Validator.ValidateObject(this, ctx, validateAllProperties: true);
         }
 
         public void MarkAsFinished() => this.IsFinished = true;
