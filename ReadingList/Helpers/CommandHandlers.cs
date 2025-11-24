@@ -9,7 +9,7 @@ namespace ReadingList.App.Helpers
     public static class CommandHandlers
     {
         
-        public static async Task HandleImportAsync(string path, IRepository<Book, int> repository, ImportService importService, TextWriter? log = null, CancellationToken ct = default)
+        public static async Task HandleImportAsync(string path,  ImportService importService, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -19,7 +19,7 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                var summary = await importService.ImportFileAsync(path, repository, log ?? Console.Out, ct);
+                var summary = await importService.ImportFileAsync(path, ct);
 
                 Console.WriteLine();
                 Console.WriteLine("=== Import summary ===");
@@ -37,7 +37,7 @@ namespace ReadingList.App.Helpers
             }
         }
 
-        public static async Task HandleImportManyAsync(string[] paths, IRepository<Book, int> repository, ImportService importService, TextWriter? log = null, CancellationToken ct = default)
+        public static async Task HandleImportManyAsync(string[] paths, ImportService importService, CancellationToken ct = default)
         {
             if(paths.Length == 0)
             {
@@ -47,7 +47,7 @@ namespace ReadingList.App.Helpers
 
             try
             {
-                var summary = await importService.ImportFilesAsync(paths, repository, log ?? Console.Out, ct);
+                var summary = await importService.ImportFilesAsync(paths, ct);
 
                 Console.WriteLine("\n=== Total import summary ===");
                 Console.WriteLine($"Imported : {summary.Imported}");

@@ -6,23 +6,22 @@ namespace ReadingList.Infrastructure
     public sealed class ImportService
     {
         private readonly int _delayMs;
+        private readonly IRepository<Book, int> _repository;
+        private readonly TextWriter _log;
 
-        public ImportService(int delayMs = 800)
+        public ImportService(IRepository<Book, int> repository, TextWriter? log = null, int delayMs = 800)
         {
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _log = log ?? TextWriter.Null;
             if (delayMs < 0) throw new ArgumentOutOfRangeException(nameof(delayMs));
             _delayMs = delayMs;
         }
 
-        public async Task<ImportSummary> ImportFileAsync(string path, IRepository<Book, int> repository, TextWriter? log = null, CancellationToken ct = default)
+        public async Task<ImportSummary> ImportFileAsync(string path, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
                 throw new ArgumentException("Path cannot be null or empty.", nameof(path));
-            }
-
-            if (repository is null)
-            {
-                throw new ArgumentNullException(nameof(repository));
             }
 
             var summary = new ImportSummary();
@@ -31,7 +30,7 @@ namespace ReadingList.Infrastructure
 
             if (lines.Length == 0)
             {
-                log?.WriteLine($"[warn] File '{path}' is empty.");
+                await _log?.WriteLineAsync($"[warn] File '{path}' is empty.");
                 return summary;
             }
 
@@ -39,7 +38,7 @@ namespace ReadingList.Infrastructure
             var headerCheck = CsvParser.ValidateHeader(headerLine);
             if (!headerCheck.IsSuccess)
             {
-                log?.WriteLine($"[warn] {headerCheck.ErrorMessage} File '{path}' skipped.");
+                await _log?.WriteLineAsync($"[warn] {headerCheck.ErrorMessage} File '{path}' skipped.");
                 return summary;
             }
 
@@ -63,14 +62,14 @@ namespace ReadingList.Infrastructure
 
                 if(!parsed.IsSuccess)
                 {
-                    log?.WriteLine($"[warn] {Path.GetFileName(path)}: line {i + 1} malformed: {parsed.ErrorMessage}. Skipping.");
+                    await _log?.WriteLineAsync($"[warn] {Path.GetFileName(path)}: line {i + 1} malformed: {parsed.ErrorMessage}. Skipping.");
                     summary.Malformed++;
                     continue;
                 }
 
                 var book = parsed.Value!;
 
-                bool added = repository.Add(book);
+                bool added = _repository.Add(book);
 
                 if (added)
                 {
@@ -88,10 +87,8 @@ namespace ReadingList.Infrastructure
         }
 
 
-        public async Task<ImportSummary> ImportFilesAsync(IEnumerable<string> paths, IRepository<Book, int> repository, TextWriter?log = null, CancellationToken ct = default)
+        public async Task<ImportSummary> ImportFilesAsync(IEnumerable<string> paths, CancellationToken ct = default)
         {
-            var logger = log ?? TextWriter.Null;
-
             var files = paths
                         .Where(p => !string.IsNullOrWhiteSpace(p))
                         .Select(p => p.Trim())
@@ -103,25 +100,24 @@ namespace ReadingList.Infrastructure
                 return new ImportSummary();
             }
 
-            var summaries = new ConcurrentBag<ImportSummary>();   //colectie thread-safe
-            //daca foloseam o lista normala, am fi avut erori de tip „collection modified concurrently”
+            var summaries = new ConcurrentBag<ImportSummary>();  
 
             var tasks = files.Select(async file =>
             {
                 try
                 {
-                    await logger.WriteLineAsync($"[info] Starting import for file '{file}'...");
-                    var s = await ImportFileAsync(file, repository, logger, ct);
+                    await _log.WriteLineAsync($"[info] Starting import for file '{file}'...");
+                    var s = await ImportFileAsync(file, ct);
                     summaries.Add(s);
                 }
                 catch (OperationCanceledException)
                 {
-                    await logger.WriteLineAsync($"[info] Canceled '{file}'.");
+                    await _log.WriteLineAsync($"[info] Canceled '{file}'.");
                     throw; 
                 }
                 catch (Exception ex)
                 {
-                    await logger.WriteLineAsync($"[error] Failed to import file '{file}': {ex.Message}");
+                    await _log.WriteLineAsync($"[error] Failed to import file '{file}': {ex.Message}");
                 }
             });
 

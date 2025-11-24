@@ -12,7 +12,7 @@ namespace ReadingList.App
         private static readonly IRepository<Book, int> repository =
             new InMemoryRepository<Book, int>(b => b.Id);
 
-        private static readonly ImportService _importService = new ImportService();
+        private static readonly ImportService _importService = new ImportService(repository, Console.Out, delayMs: 800);
         
         private static readonly ExportService _exportService =
             new ExportService(new IExportStrategy[]
@@ -82,11 +82,11 @@ namespace ReadingList.App
 
                     if(parts.Length == 1)
                     {
-                        await CommandHandlers.HandleImportAsync(parts[0], repository,_importService, Console.Out, token);
+                        await CommandHandlers.HandleImportAsync(parts[0], _importService, token);
                     }
                     else
                     {
-                        await CommandHandlers.HandleImportManyAsync(parts, repository, _importService, Console.Out, token);
+                        await CommandHandlers.HandleImportManyAsync(parts, _importService, token);
                     }
                     continue;
                 }
